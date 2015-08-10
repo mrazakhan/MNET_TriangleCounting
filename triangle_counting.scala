@@ -40,7 +40,7 @@ var districts=sc.textFile("Rwanda_In/Districts.csv").filter(line=>(line.contains
 
 districts.foreach(d=>({
 
-val graph = GraphLoader.edgeListFile(sc, "Rwanda_In/NetworkGraph/EdgeList"+month+"-"+d+".csv", true).partitionBy(PartitionStrategy.RandomVertexCut)
+val graph = GraphLoader.edgeListFile(sc, "Rwanda_In/NetworkGraph/EdgeList-"+month+"-"+d+".csv", true).partitionBy(PartitionStrategy.RandomVertexCut)
 // Find the triangle count for each vertex
 //The documentation says that the canonical orientation must be true for connected components algorithm but this thread says that it is an overstatement
 //http://mail-archives.apache.org/mod_mbox/spark-dev/201501.mbox/%3CCAPh_B=aiXpoeRAnHs1K6vZRiEqg_fmSMhr5rudqvvF6hzVRraw@mail.gmail.com%3E
@@ -49,21 +49,40 @@ val graph = GraphLoader.edgeListFile(sc, "Rwanda_In/NetworkGraph/EdgeList"+month
 
 val triCounts = graph.triangleCount().vertices
 
-triCounts.saveAsTextFile("Rwanda_Out/TriangleCounts/Triangle_Counting-"+month+"-"+d+".csv")
+triCounts.saveAsTextFile("Rwanda_Out/TriangleCounts/0629/Triangle_Counting-"+month+"-"+d+".csv")
 
 }))
 
-//districts.foreach(d=>({
 
-val graph = GraphLoader.edgeListFile(sc, "Rwanda_In/NetworkGraph/EdgeList"+month+"-KigaliNetwork.csv", true).partitionBy(PartitionStrategy.RandomVertexCut)
-// Find the triangle count for each vertex
-//The documentation says that the canonical orientation must be true for connected components algorithm but this thread says that it is an overstatement
-//http://mail-archives.apache.org/mod_mbox/spark-dev/201501.mbox/%3CCAPh_B=aiXpoeRAnHs1K6vZRiEqg_fmSMhr5rudqvvF6hzVRraw@mail.gmail.com%3E
-//Basically this thread says that if there are more than one edges between the two vertices then the srcId<destId
-//To ensure this thing, the python script undirectionality_enforcer should be used
+import scala.collection.mutable.ListBuffer
+var resultsListBuffer=new ListBuffer[String]()
+var peers=graph.collectNeighborIds(EdgeDirection.Either)
 
-val triCounts = graph.triangleCount().vertices
 
-triCounts.saveAsTextFile("Rwanda_Out/TriangleCounts/Triangle_Counting-"+month+"-network-kigali.csv")
+
+peers.take(5000).foreach(
+x=>({
+var (g,p)=x
+println("Node: " + g + " has neighbors: " + p.mkString(" "))
+var nodegraph=graph.subgraph(vpred=(v,i)=>((p contains v)||g==v))
+println("Node: " + g + " has nodegraph of vertices: " + nodegraph.vertices.count()+" and edges ", nodegraph.edges.count())
+
+//var tricounts2=nodegraph.triangleCount().vertices.take(nodegraph.triangleCount().vertices.count().toInt).mkString(" ")
+
+var tricounts2RDD=nodegraph.triangleCount().vertices
+var tricounts2=nodegraph.triangleCount().vertices.take(1).mkString(" ")
+
+resultsListBuffer+=tricounts2
+println("Node: " + g + " has tricounts"+tricounts2)
+}
+)
+)
+
+var resultsList=resultsListBuffer.toList
+
+var resultsRDD=sc.parallelize(resultsList)
+
+
+triCounts.saveAsTextFile("Rwanda_Out/TriangleCounts/0809/Triangle_Counting-5000"+month+"-network-kigali.csv")
 
 //}))
