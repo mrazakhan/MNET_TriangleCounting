@@ -36,7 +36,9 @@ class DSV (var line:String="", var delimiter:String=",",var parts:Array[String]=
 
 var month="0603"//get it as command line arg
 
-var districts=sc.textFile("Rwanda_In/Districts.csv").filter(line=>(line.contains("ID")==false)).map(line=>(new DSV(line,","))).map(d=>(d.parts(1))).distinct.collect()
+//var districts=sc.textFile("Rwanda_In/Districts.csv").filter(line=>(line.contains("ID")==false)).map(line=>(new DSV(line,","))).map(d=>(d.parts(1))).distinct.collect()
+
+var districts=Array("Bugesera","Burera","Gakenke","Kigali","Gatsibo","Gicumbi","Gisagara","Huye","Kamonyi","Karongi","Kayonza","Kirehe","Muhanga","Musanze","Ngoma","Ngororero","Nyabihu","Nyagatare","Nyamagabe","Nyamasheke","Nyanza","Nyaruguru","Rubavu","Ruhango","Rulindo","Rusizi","Rutsiro","Rwamagana")
 
 districts.foreach(d=>({
 
